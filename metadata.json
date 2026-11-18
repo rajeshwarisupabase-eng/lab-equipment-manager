@@ -1,0 +1,6 @@
+{
+  "name": "Laboratory Equipment Management System",
+  "description": "Self-contained laboratory equipment inventory, issue/return tracking, and live dashboard powered by Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

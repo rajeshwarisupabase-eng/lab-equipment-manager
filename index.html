@@ -1,0 +1,1970 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laboratory Equipment Management System</title>
+    <meta
+      name="description"
+      content="Self-contained laboratory equipment inventory, issue/return tracking, and live dashboard powered by Supabase."
+    />
+    <meta property="og:title" content="Laboratory Equipment Management System" />
+    <meta
+      property="og:description"
+      content="Self-contained laboratory equipment inventory, issue/return tracking, and live dashboard powered by Supabase."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --bg-canvas: #f5f7fb;
+        --bg-surface: #ffffff;
+        --bg-subtle: #f1f5f9;
+        --bg-hover: #f8fafc;
+        --border-subtle: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --accent: #3b5bdb;
+        --accent-hover: #2f49b8;
+        --accent-soft: #eef2ff;
+        --accent-text: #3730a3;
+        --success-bg: #ecfdf5;
+        --success-border: #a7f3d0;
+        --success-text: #047857;
+        --warning-bg: #fffbeb;
+        --warning-border: #fde68a;
+        --warning-text: #b45309;
+        --danger: #dc2626;
+        --danger-hover: #b91c1c;
+        --danger-bg: #fef2f2;
+        --danger-border: #fecaca;
+        --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --shadow-md: 0 10px 30px -10px rgba(15, 23, 42, 0.16);
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--text-primary);
+        background-color: var(--bg-canvas);
+        min-height: 100vh;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Top Header (3-zone contract) */
+      .topbar {
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-subtle);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .topbar-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 14px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 32px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text-primary);
+        text-decoration: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
+        background: var(--accent);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .topnav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .topnav a {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        flex-shrink: 0;
+        padding: 4px 0;
+        border-bottom: 2px solid transparent;
+        transition: color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .topnav a:hover {
+        color: var(--text-primary);
+        border-bottom-color: var(--border-strong);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 16px;
+        min-height: 40px;
+        border-radius: var(--radius-sm);
+        border: 1px solid transparent;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+      }
+
+      .btn:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .btn:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #ffffff;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      .btn-secondary {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border-color: var(--border-strong);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--bg-hover);
+        border-color: #94a3b8;
+      }
+
+      .btn-issue {
+        background: var(--accent-soft);
+        color: var(--accent-text);
+        border-color: #c7d2fe;
+        padding: 6px 12px;
+        min-height: 34px;
+        font-size: 13px;
+      }
+
+      .btn-issue:hover:not(:disabled) {
+        background: #e0e7ff;
+      }
+
+      .btn-return {
+        background: var(--success-bg);
+        color: var(--success-text);
+        border-color: var(--success-border);
+        padding: 6px 12px;
+        min-height: 34px;
+        font-size: 13px;
+      }
+
+      .btn-return:hover:not(:disabled) {
+        background: #d1fae5;
+      }
+
+      .btn-danger-outline {
+        background: var(--bg-surface);
+        color: var(--danger);
+        border-color: var(--danger-border);
+        padding: 6px 12px;
+        min-height: 34px;
+        font-size: 13px;
+      }
+
+      .btn-danger-outline:hover:not(:disabled) {
+        background: var(--danger-bg);
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: #ffffff;
+      }
+
+      .btn-danger:hover:not(:disabled) {
+        background: var(--danger-hover);
+      }
+
+      /* Main Layout */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 22px 24px 48px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .page-intro {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .page-title {
+        margin: 0;
+        font-size: clamp(1.45rem, 2.1vw, 1.75rem);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+
+      .page-subtitle {
+        margin: 4px 0 0;
+        color: var(--text-secondary);
+        font-size: 14.5px;
+      }
+
+      .error-banner {
+        background: var(--danger-bg);
+        border: 1px solid var(--danger-border);
+        color: #991b1b;
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 14px;
+      }
+
+      .error-banner-text {
+        flex: 1 1 320px;
+      }
+
+      .error-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      /* KPI Cards */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .kpi-card {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .kpi-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .kpi-value {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .kpi-value--available {
+        color: var(--success-text);
+      }
+
+      .kpi-value--issued {
+        color: var(--warning-text);
+      }
+
+      .kpi-value--accent {
+        color: var(--accent);
+      }
+
+      .kpi-note {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Section Cards */
+      .section-card {
+        padding: 22px 24px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+      }
+
+      .section-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Add Equipment Form */
+      .add-form {
+        display: grid;
+        grid-template-columns: 2fr 1.4fr 0.8fr auto;
+        gap: 14px;
+        align-items: end;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+      }
+
+      .input,
+      .select {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 12px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        color: var(--text-primary);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .input:hover,
+      .select:hover {
+        border-color: #94a3b8;
+      }
+
+      .input::placeholder {
+        color: #94a3b8;
+      }
+
+      .form-error {
+        margin: 10px 0 0;
+        font-size: 13px;
+        color: var(--danger);
+        font-weight: 500;
+      }
+
+      /* Inventory Toolbar */
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .toolbar-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1 1 360px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .search-wrap {
+        position: relative;
+        flex: 1 1 240px;
+        max-width: 340px;
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+      }
+
+      .search-input {
+        padding-left: 36px;
+      }
+
+      .filter-select {
+        width: auto;
+        min-width: 165px;
+      }
+
+      /* Inventory Table */
+      .table-wrap {
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+      }
+
+      thead {
+        background: var(--bg-subtle);
+        border-bottom: 1px solid var(--border-subtle);
+      }
+
+      th {
+        padding: 12px 16px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+
+      td {
+        padding: 13px 16px;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 14px;
+        vertical-align: middle;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr:hover {
+        background: var(--bg-hover);
+      }
+
+      .col-num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .equip-name {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .equip-id {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .status-badge--available {
+        background: var(--success-bg);
+        color: var(--success-text);
+        border: 1px solid var(--success-border);
+      }
+
+      .status-badge--issued {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+        border: 1px solid var(--warning-border);
+      }
+
+      .issued-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .issued-person {
+        font-weight: 500;
+        color: var(--text-primary);
+      }
+
+      .issued-date {
+        font-size: 12.5px;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .muted-dash {
+        color: #94a3b8;
+      }
+
+      .row-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      /* Empty & Loading States */
+      .empty-state {
+        padding: 48px 24px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .empty-title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .empty-desc {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-muted);
+        max-width: 380px;
+      }
+
+      .skeleton-row {
+        height: 52px;
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.2s infinite linear;
+        border-radius: 6px;
+        margin: 8px 16px;
+      }
+
+      @keyframes shimmer {
+        from {
+          background-position: 200% 0;
+        }
+        to {
+          background-position: -200% 0;
+        }
+      }
+
+      /* Dialog Modals */
+      dialog {
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 0;
+        width: min(440px, calc(100vw - 32px));
+        box-shadow: var(--shadow-md);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+      }
+
+      dialog::backdrop {
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(2px);
+      }
+
+      .modal-header {
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .modal-title {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 700;
+      }
+
+      .modal-close {
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        cursor: pointer;
+      }
+
+      .modal-close:hover {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+      }
+
+      .modal-body {
+        padding: 20px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .modal-summary {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+        background: var(--bg-hover);
+        border: 1px solid var(--border-subtle);
+        padding: 10px 12px;
+        border-radius: var(--radius-sm);
+      }
+
+      .modal-footer {
+        padding: 14px 22px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      /* Toast */
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 50;
+        background: #0f172a;
+        color: #ffffff;
+        padding: 12px 16px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--shadow-md);
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+      }
+
+      .toast.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Responsive */
+      @media (max-width: 960px) {
+        .kpi-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .add-form {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .add-form .add-submit-wrap {
+          grid-column: 1 / -1;
+        }
+
+        .add-form .add-submit-wrap .btn {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner {
+          padding: 12px 16px;
+          gap: 12px;
+        }
+
+        .topnav {
+          display: none;
+        }
+
+        .container {
+          padding: 20px 16px 48px;
+          gap: 18px;
+        }
+
+        .section-card {
+          padding: 18px 16px;
+        }
+
+        .add-form {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar-controls {
+          width: 100%;
+          justify-content: stretch;
+        }
+
+        .search-wrap,
+        .filter-select {
+          max-width: none;
+          width: 100%;
+          flex: 1 1 100%;
+        }
+
+        /* Responsive stacked cards for mobile table */
+        .table-wrap {
+          border: none;
+          border-radius: 0;
+        }
+
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+          width: 100%;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tbody {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        tbody tr {
+          border: 1px solid var(--border-subtle);
+          border-radius: var(--radius-md);
+          padding: 14px;
+          background: var(--bg-surface);
+        }
+
+        tbody td {
+          border-bottom: none;
+          padding: 5px 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          text-align: right;
+        }
+
+        tbody td::before {
+          content: attr(data-label);
+          font-size: 12.5px;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-align: left;
+          flex-shrink: 0;
+        }
+
+        tbody td:first-child {
+          padding-top: 0;
+          padding-bottom: 8px;
+          margin-bottom: 4px;
+          border-bottom: 1px solid var(--border-subtle);
+          text-align: left;
+        }
+
+        tbody td:first-child::before {
+          display: none;
+        }
+
+        tbody td:last-child {
+          padding-top: 10px;
+          margin-top: 6px;
+          border-top: 1px solid var(--border-subtle);
+        }
+
+        tbody td:last-child::before {
+          display: none;
+        }
+
+        .row-actions {
+          width: 100%;
+          justify-content: flex-end;
+        }
+
+        .row-actions .btn {
+          min-height: 40px;
+          flex: 1 1 auto;
+        }
+
+        .col-num {
+          text-align: right;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a href="#overview" class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 3h6" />
+              <path d="M10 3v6.5L5.2 17.6A2 2 0 0 0 6.9 20.5h10.2a2 2 0 0 0 1.7-2.9L14 9.5V3" />
+              <path d="M7.5 14.5h9" />
+            </svg>
+          </span>
+          <span>LabTrack Inventory</span>
+        </a>
+
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="#overview">Overview</a>
+          <a href="#add-equipment">Add Equipment</a>
+          <a href="#inventory">Inventory</a>
+        </nav>
+
+        <div class="topbar-actions">
+          <button type="button" class="btn btn-primary" id="jumpToAddBtn">
+            + Add Equipment
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="page-intro" id="overview">
+        <div>
+          <h1 class="page-title">Laboratory Equipment Management</h1>
+          <p class="page-subtitle">
+            Track lab apparatus, monitor availability, and log student or staff checkouts in one shared registry.
+          </p>
+        </div>
+      </section>
+
+      <div class="error-banner" id="errorBanner" role="alert" hidden>
+        <span class="error-banner-text" id="errorBannerText">Could not connect to Supabase.</span>
+        <div class="error-actions">
+          <button type="button" class="btn btn-secondary" id="copySqlBtn" hidden>Copy Setup SQL</button>
+          <button type="button" class="btn btn-secondary" id="retryLoadBtn">Retry</button>
+        </div>
+      </div>
+
+      <section class="kpi-grid" aria-label="Equipment summary statistics">
+        <article class="card kpi-card">
+          <span class="kpi-label">Total Equipment</span>
+          <span class="kpi-value" id="statTotal" data-testid="stat-total">0</span>
+          <span class="kpi-note" id="statUnits">0 total units</span>
+        </article>
+
+        <article class="card kpi-card">
+          <span class="kpi-label">Available</span>
+          <span class="kpi-value kpi-value--available" id="statAvailable" data-testid="stat-available">0</span>
+          <span class="kpi-note">Ready for checkout</span>
+        </article>
+
+        <article class="card kpi-card">
+          <span class="kpi-label">Issued</span>
+          <span class="kpi-value kpi-value--issued" id="statIssued" data-testid="stat-issued">0</span>
+          <span class="kpi-note">Currently checked out</span>
+        </article>
+
+        <article class="card kpi-card">
+          <span class="kpi-label">Categories</span>
+          <span class="kpi-value kpi-value--accent" id="statCategories" data-testid="stat-categories">0</span>
+          <span class="kpi-note">Active lab disciplines</span>
+        </article>
+      </section>
+
+      <section class="card section-card" id="add-equipment" aria-labelledby="addHeading">
+        <div class="section-header">
+          <h2 class="section-title" id="addHeading">Add New Equipment</h2>
+          <span class="section-meta">Adds record with Available status</span>
+        </div>
+
+        <form class="add-form" id="addEquipmentForm" novalidate>
+          <div class="field">
+            <label for="equipName">Equipment Name</label>
+            <input
+              class="input"
+              id="equipName"
+              name="name"
+              type="text"
+              placeholder="e.g. Digital Oscilloscope"
+              required
+              maxlength="120"
+            />
+          </div>
+
+          <div class="field">
+            <label for="equipCategory">Category</label>
+            <input
+              class="input"
+              id="equipCategory"
+              name="category"
+              type="text"
+              list="categorySuggestions"
+              placeholder="e.g. Electronics"
+              required
+              maxlength="80"
+            />
+            <datalist id="categorySuggestions">
+              <option value="Electronics"></option>
+              <option value="Optics"></option>
+              <option value="Chemistry"></option>
+              <option value="Biology"></option>
+              <option value="Measurement"></option>
+              <option value="Safety"></option>
+            </datalist>
+          </div>
+
+          <div class="field">
+            <label for="equipQuantity">Quantity</label>
+            <input
+              class="input"
+              id="equipQuantity"
+              name="quantity"
+              type="number"
+              min="1"
+              step="1"
+              value="1"
+              required
+            />
+          </div>
+
+          <div class="add-submit-wrap">
+            <button type="submit" class="btn btn-primary" id="addSubmitBtn">
+              Add Equipment
+            </button>
+          </div>
+        </form>
+        <p class="form-error" id="addFormError" role="alert" hidden></p>
+      </section>
+
+      <section class="card section-card" id="inventory" aria-labelledby="inventoryHeading">
+        <div class="toolbar">
+          <div>
+            <h2 class="section-title" id="inventoryHeading">Equipment Inventory</h2>
+            <span class="section-meta" id="inventoryCountLabel">Loading records...</span>
+          </div>
+
+          <div class="toolbar-controls">
+            <div class="search-wrap">
+              <label for="searchInput" class="sr-only">Search equipment by name or category</label>
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+              <input
+                class="input search-input"
+                id="searchInput"
+                type="search"
+                placeholder="Search by name or category..."
+              />
+            </div>
+
+            <label for="statusFilter" class="sr-only">Filter by status</label>
+            <select class="select filter-select" id="statusFilter">
+              <option value="all">All Statuses</option>
+              <option value="available">Available Only</option>
+              <option value="issued">Issued Only</option>
+            </select>
+
+            <button type="button" class="btn btn-secondary" id="exportCsvBtn" aria-label="Export current inventory to CSV">
+              Export CSV
+            </button>
+
+            <button type="button" class="btn btn-secondary" id="refreshBtn" aria-label="Refresh equipment list">
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div id="loadingState" hidden>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+          <div class="skeleton-row"></div>
+        </div>
+
+        <div class="table-wrap" id="tableWrap" hidden>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Equipment</th>
+                <th scope="col">Category</th>
+                <th scope="col" class="col-num">Quantity</th>
+                <th scope="col">Status</th>
+                <th scope="col">Issued To &amp; Date</th>
+                <th scope="col" class="col-num">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="equipmentTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="empty-state" id="emptyState" hidden>
+          <p class="empty-title" id="emptyTitle">No equipment recorded yet</p>
+          <p class="empty-desc" id="emptyDesc">
+            Use the Add New Equipment form above to register your first laboratory item.
+          </p>
+          <button type="button" class="btn btn-secondary" id="clearFiltersBtn" hidden>
+            Clear Search &amp; Filter
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Issue Equipment Modal -->
+    <dialog id="issueDialog" aria-labelledby="issueDialogTitle">
+      <form id="issueForm" method="dialog" novalidate>
+        <div class="modal-header">
+          <h3 class="modal-title" id="issueDialogTitle">Issue Equipment</h3>
+          <button type="button" class="modal-close" id="issueCloseBtn" aria-label="Close issue dialog">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <p class="modal-summary" id="issueEquipSummary"></p>
+
+          <div class="field">
+            <label for="issuedToInput">Student or Staff Name</label>
+            <input
+              class="input"
+              id="issuedToInput"
+              type="text"
+              placeholder="e.g. Priya Sharma (B.Sc. Physics)"
+              required
+              maxlength="120"
+            />
+          </div>
+
+          <div class="field">
+            <label for="issueDateInput">Issue Date</label>
+            <input class="input" id="issueDateInput" type="date" required />
+          </div>
+
+          <p class="form-error" id="issueFormError" role="alert" hidden></p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="issueCancelBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="issueConfirmBtn">Confirm Issue</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Delete Confirmation Modal -->
+    <dialog id="deleteDialog" aria-labelledby="deleteDialogTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="deleteDialogTitle">Delete Equipment</h3>
+        <button type="button" class="modal-close" id="deleteCloseBtn" aria-label="Close delete confirmation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18"></path>
+            <path d="m6 6 12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-summary" id="deleteConfirmMessage"></p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="deleteCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="deleteConfirmBtn">Delete</button>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      // =========================================================================
+      // SUPABASE CONFIGURATION — Replace these two constants with your project keys
+      // =========================================================================
+      const SUPABASE_URL = "https://outpenykahnppfycidoh.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im91dHBlbnlrYWhucHBmeWNpZG9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5ODA0MTksImV4cCI6MjExMDU1NjQxOX0.JXSzrABx-tOPvBtCgJTXGM-49fzWRVD-f0su5R1PEPk";
+      // =========================================================================
+
+      const TABLE_NAME = "equipment";
+      const PREVIEW_STORAGE_KEY = "lab_equipment_preview_v1";
+
+      const SAMPLE_EQUIPMENT = [
+        {
+          id: 1,
+          name: "Digital Storage Oscilloscope (100 MHz)",
+          category: "Electronics",
+          quantity: 4,
+          status: "available",
+          issued_to: null,
+          issue_date: null,
+          created_at: "2026-11-10T09:00:00Z"
+        },
+        {
+          id: 2,
+          name: "Binocular Compound Microscope",
+          category: "Biology",
+          quantity: 6,
+          status: "issued",
+          issued_to: "Aarav Mehta",
+          issue_date: "2026-11-14",
+          created_at: "2026-11-11T10:30:00Z"
+        },
+        {
+          id: 3,
+          name: "Analytical Precision Balance (0.1 mg)",
+          category: "Chemistry",
+          quantity: 2,
+          status: "available",
+          issued_to: null,
+          issue_date: null,
+          created_at: "2026-11-12T14:15:00Z"
+        }
+      ];
+
+      // Pure helper functions (isolated for deterministic testing & clarity)
+      function normalizeSupabaseUrl(url) {
+        if (typeof url !== "string") return "";
+        return url
+          .trim()
+          .replace(/\/rest\/v1\/?$/i, "")
+          .replace(/\/+$/, "");
+      }
+
+      function isSupabaseConfigured(url, key) {
+        const cleanUrl = normalizeSupabaseUrl(url);
+        return (
+          typeof key === "string" &&
+          cleanUrl !== "" &&
+          key.trim() !== "" &&
+          !cleanUrl.includes("YOUR_SUPABASE_URL") &&
+          !key.includes("YOUR_SUPABASE_ANON_KEY") &&
+          /^https?:\/\//i.test(cleanUrl)
+        );
+      }
+
+      const SETUP_SQL = `create table if not exists public.equipment (
+  id bigint generated by default as identity primary key,
+  name text not null,
+  category text not null,
+  quantity integer not null default 1 check (quantity >= 1),
+  status text not null default 'available' check (status in ('available', 'issued')),
+  issued_to text,
+  issue_date date,
+  created_at timestamptz not null default now()
+);
+
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on table public.equipment to anon, authenticated;
+grant usage, select on all sequences in schema public to anon, authenticated;
+
+alter table public.equipment enable row level security;
+
+drop policy if exists "Public equipment access" on public.equipment;
+create policy "Public equipment access"
+  on public.equipment
+  for all
+  to anon, authenticated
+  using (true)
+  with check (true);
+
+insert into public.equipment (name, category, quantity, status, issued_to, issue_date)
+select v.name, v.category, v.quantity, v.status, v.issued_to, v.issue_date
+from (
+  values
+    ('Digital Storage Oscilloscope (100 MHz)', 'Electronics', 4, 'available', null::text, null::date),
+    ('Binocular Compound Microscope', 'Biology', 6, 'issued', 'Aarav Mehta', date '2026-11-14'),
+    ('Analytical Precision Balance (0.1 mg)', 'Chemistry', 2, 'available', null::text, null::date)
+) as v(name, category, quantity, status, issued_to, issue_date)
+where not exists (select 1 from public.equipment);`;
+
+      function isSetupError(err) {
+        const msg = String(err?.message || "");
+        const code = String(err?.code || "");
+        return (
+          code === "PGRST205" ||
+          code === "42P01" ||
+          code === "42501" ||
+          /could not find the table|relation .*equipment.* does not exist|permission denied for table|row-level security/i.test(msg)
+        );
+      }
+
+      function formatSupabaseError(err, fallbackMessage) {
+        const msg = String(err?.message || "");
+        const code = String(err?.code || "");
+        if (
+          code === "PGRST205" ||
+          code === "42P01" ||
+          /could not find the table|relation .*equipment.* does not exist/i.test(msg)
+        ) {
+          return 'The "equipment" table was not found in Supabase. Click "Copy Setup SQL", run it in your Supabase SQL Editor, then click Retry.';
+        }
+        if (/permission denied for table/i.test(msg) || (code === "42501" && !/row-level security/i.test(msg))) {
+          return 'Supabase table permissions are missing for the anon role. Click "Copy Setup SQL", run it in your Supabase SQL Editor, then click Retry.';
+        }
+        if (code === "42501" || /row-level security/i.test(msg)) {
+          return 'Permission denied by Supabase Row Level Security. Click "Copy Setup SQL", run it in your Supabase SQL Editor, then click Retry.';
+        }
+        return msg || fallbackMessage || "Could not connect to Supabase.";
+      }
+
+      function computeStats(items) {
+        const list = Array.isArray(items) ? items : [];
+        let available = 0;
+        let issued = 0;
+        let totalUnits = 0;
+        const categories = new Set();
+
+        for (const item of list) {
+          if (item.status === "issued") {
+            issued += 1;
+          } else {
+            available += 1;
+          }
+          const qty = Number(item.quantity);
+          if (Number.isFinite(qty) && qty > 0) {
+            totalUnits += qty;
+          }
+          if (typeof item.category === "string" && item.category.trim() !== "") {
+            categories.add(item.category.trim().toLowerCase());
+          }
+        }
+
+        return {
+          total: list.length,
+          available,
+          issued,
+          categories: categories.size,
+          totalUnits
+        };
+      }
+
+      function filterEquipment(items, searchTerm, statusFilter) {
+        const list = Array.isArray(items) ? items : [];
+        const query = (searchTerm || "").trim().toLowerCase();
+        const status = statusFilter || "all";
+
+        return list.filter((item) => {
+          if (status !== "all" && item.status !== status) {
+            return false;
+          }
+          if (!query) {
+            return true;
+          }
+          const nameMatch = (item.name || "").toLowerCase().includes(query);
+          const categoryMatch = (item.category || "").toLowerCase().includes(query);
+          return nameMatch || categoryMatch;
+        });
+      }
+
+      function validateNewEquipment(name, category, quantityRaw) {
+        const trimmedName = (name || "").trim();
+        const trimmedCategory = (category || "").trim();
+        const quantity = Number(quantityRaw);
+
+        if (!trimmedName) {
+          return { valid: false, error: "Please enter an equipment name." };
+        }
+        if (!trimmedCategory) {
+          return { valid: false, error: "Please enter a category." };
+        }
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          return { valid: false, error: "Quantity must be a whole number of at least 1." };
+        }
+        return {
+          valid: true,
+          data: {
+            name: trimmedName,
+            category: trimmedCategory,
+            quantity
+          }
+        };
+      }
+
+      function validateIssueInput(issuedTo, issueDate) {
+        const trimmedPerson = (issuedTo || "").trim();
+        const trimmedDate = (issueDate || "").trim();
+
+        if (!trimmedPerson) {
+          return { valid: false, error: "Please enter the student or staff member's name." };
+        }
+        if (!trimmedDate || !/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
+          return { valid: false, error: "Please select a valid issue date." };
+        }
+        return {
+          valid: true,
+          data: {
+            issued_to: trimmedPerson,
+            issue_date: trimmedDate
+          }
+        };
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function getTodayIsoDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function escapeCsvCell(value) {
+        const str = String(value ?? "");
+        if (/[",\r\n]/.test(str)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }
+
+      function equipmentToCsv(items) {
+        const list = Array.isArray(items) ? items : [];
+        const headers = ["ID", "Equipment Name", "Category", "Quantity", "Status", "Issued To", "Issue Date"];
+        const lines = [headers.map(escapeCsvCell).join(",")];
+
+        for (const item of list) {
+          const row = [
+            item.id ?? "",
+            item.name ?? "",
+            item.category ?? "",
+            item.quantity ?? "",
+            item.status ?? "",
+            item.status === "issued" ? item.issued_to ?? "" : "",
+            item.status === "issued" ? item.issue_date ?? "" : ""
+          ];
+          lines.push(row.map(escapeCsvCell).join(","));
+        }
+
+        return lines.join("\r\n");
+      }
+
+      // Application state & data adapter (Supabase or local preview fallback)
+      if (typeof document !== "undefined") {
+        const normalizedUrl = normalizeSupabaseUrl(SUPABASE_URL);
+        const useCloud =
+          isSupabaseConfigured(normalizedUrl, SUPABASE_KEY) &&
+          window.supabase &&
+          typeof window.supabase.createClient === "function";
+
+        const supabaseClient = useCloud
+          ? window.supabase.createClient(normalizedUrl, SUPABASE_KEY.trim())
+          : null;
+
+        let allEquipment = [];
+        let activeIssueId = null;
+        let activeDeleteId = null;
+        let toastTimer = null;
+
+        // DOM references
+        const errorBanner = document.getElementById("errorBanner");
+        const errorBannerText = document.getElementById("errorBannerText");
+        const copySqlBtn = document.getElementById("copySqlBtn");
+        const retryLoadBtn = document.getElementById("retryLoadBtn");
+
+        const statTotal = document.getElementById("statTotal");
+        const statUnits = document.getElementById("statUnits");
+        const statAvailable = document.getElementById("statAvailable");
+        const statIssued = document.getElementById("statIssued");
+        const statCategories = document.getElementById("statCategories");
+
+        const jumpToAddBtn = document.getElementById("jumpToAddBtn");
+        const addEquipmentForm = document.getElementById("addEquipmentForm");
+        const equipNameInput = document.getElementById("equipName");
+        const equipCategoryInput = document.getElementById("equipCategory");
+        const equipQuantityInput = document.getElementById("equipQuantity");
+        const addSubmitBtn = document.getElementById("addSubmitBtn");
+        const addFormError = document.getElementById("addFormError");
+
+        const searchInput = document.getElementById("searchInput");
+        const statusFilter = document.getElementById("statusFilter");
+        const exportCsvBtn = document.getElementById("exportCsvBtn");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const inventoryCountLabel = document.getElementById("inventoryCountLabel");
+        const loadingState = document.getElementById("loadingState");
+        const tableWrap = document.getElementById("tableWrap");
+        const equipmentTableBody = document.getElementById("equipmentTableBody");
+        const emptyState = document.getElementById("emptyState");
+        const emptyTitle = document.getElementById("emptyTitle");
+        const emptyDesc = document.getElementById("emptyDesc");
+        const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+
+        const issueDialog = document.getElementById("issueDialog");
+        const issueForm = document.getElementById("issueForm");
+        const issueEquipSummary = document.getElementById("issueEquipSummary");
+        const issuedToInput = document.getElementById("issuedToInput");
+        const issueDateInput = document.getElementById("issueDateInput");
+        const issueFormError = document.getElementById("issueFormError");
+        const issueConfirmBtn = document.getElementById("issueConfirmBtn");
+        const issueCancelBtn = document.getElementById("issueCancelBtn");
+        const issueCloseBtn = document.getElementById("issueCloseBtn");
+
+        const deleteDialog = document.getElementById("deleteDialog");
+        const deleteConfirmMessage = document.getElementById("deleteConfirmMessage");
+        const deleteConfirmBtn = document.getElementById("deleteConfirmBtn");
+        const deleteCancelBtn = document.getElementById("deleteCancelBtn");
+        const deleteCloseBtn = document.getElementById("deleteCloseBtn");
+
+        const toastEl = document.getElementById("toast");
+
+        function readLocalStore() {
+          try {
+            const raw = localStorage.getItem(PREVIEW_STORAGE_KEY);
+            if (!raw) {
+              localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(SAMPLE_EQUIPMENT));
+              return SAMPLE_EQUIPMENT.map((item) => ({ ...item }));
+            }
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return SAMPLE_EQUIPMENT.map((item) => ({ ...item }));
+          }
+        }
+
+        function writeLocalStore(items) {
+          try {
+            localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(items));
+          } catch {
+            // Ignore storage quota errors in restricted frames
+          }
+        }
+
+        const db = {
+          async list() {
+            if (supabaseClient) {
+              const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select("*")
+                .order("created_at", { ascending: false })
+                .order("id", { ascending: false });
+              if (error) throw error;
+              return data || [];
+            }
+            return readLocalStore().sort((a, b) => Number(b.id) - Number(a.id));
+          },
+
+          async create(payload) {
+            if (supabaseClient) {
+              const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .insert([
+                  {
+                    name: payload.name,
+                    category: payload.category,
+                    quantity: payload.quantity,
+                    status: "available",
+                    issued_to: null,
+                    issue_date: null
+                  }
+                ])
+                .select();
+              if (error) throw error;
+              return data?.[0];
+            }
+            const items = readLocalStore();
+            const nextId = items.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
+            const created = {
+              id: nextId,
+              name: payload.name,
+              category: payload.category,
+              quantity: payload.quantity,
+              status: "available",
+              issued_to: null,
+              issue_date: null,
+              created_at: new Date().toISOString()
+            };
+            items.unshift(created);
+            writeLocalStore(items);
+            return created;
+          },
+
+          async issue(id, issuedTo, issueDate) {
+            if (supabaseClient) {
+              const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .update({
+                  status: "issued",
+                  issued_to: issuedTo,
+                  issue_date: issueDate
+                })
+                .eq("id", id);
+              if (error) throw error;
+              return;
+            }
+            const items = readLocalStore().map((item) =>
+              Number(item.id) === Number(id)
+                ? { ...item, status: "issued", issued_to: issuedTo, issue_date: issueDate }
+                : item
+            );
+            writeLocalStore(items);
+          },
+
+          async returnItem(id) {
+            if (supabaseClient) {
+              const { error } = await supabaseClient
+                .from(TABLE_NAME)
+                .update({
+                  status: "available",
+                  issued_to: null,
+                  issue_date: null
+                })
+                .eq("id", id);
+              if (error) throw error;
+              return;
+            }
+            const items = readLocalStore().map((item) =>
+              Number(item.id) === Number(id)
+                ? { ...item, status: "available", issued_to: null, issue_date: null }
+                : item
+            );
+            writeLocalStore(items);
+          },
+
+          async remove(id) {
+            if (supabaseClient) {
+              const { error } = await supabaseClient.from(TABLE_NAME).delete().eq("id", id);
+              if (error) throw error;
+              return;
+            }
+            const items = readLocalStore().filter((item) => Number(item.id) !== Number(id));
+            writeLocalStore(items);
+          }
+        };
+
+        function showToast(message) {
+          toastEl.textContent = message;
+          toastEl.classList.add("is-visible");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => {
+            toastEl.classList.remove("is-visible");
+          }, 3000);
+        }
+
+        function setError(message, showSqlButton = false) {
+          if (message) {
+            errorBannerText.textContent = message;
+            copySqlBtn.hidden = !showSqlButton;
+            errorBanner.hidden = false;
+          } else {
+            errorBanner.hidden = true;
+            copySqlBtn.hidden = true;
+          }
+        }
+
+        function renderDashboard() {
+          const stats = computeStats(allEquipment);
+          statTotal.textContent = String(stats.total);
+          statUnits.textContent = `${stats.totalUnits} total ${stats.totalUnits === 1 ? "unit" : "units"}`;
+          statAvailable.textContent = String(stats.available);
+          statIssued.textContent = String(stats.issued);
+          statCategories.textContent = String(stats.categories);
+        }
+
+        function renderInventory() {
+          const query = searchInput.value;
+          const filter = statusFilter.value;
+          const filtered = filterEquipment(allEquipment, query, filter);
+
+          if (allEquipment.length === 0) {
+            inventoryCountLabel.textContent = "0 items in registry";
+          } else if (filtered.length === allEquipment.length) {
+            inventoryCountLabel.textContent = `Showing ${filtered.length} ${filtered.length === 1 ? "item" : "items"}`;
+          } else {
+            inventoryCountLabel.textContent = `Showing ${filtered.length} of ${allEquipment.length} items`;
+          }
+
+          exportCsvBtn.disabled = filtered.length === 0;
+
+          if (filtered.length === 0) {
+            tableWrap.hidden = true;
+            emptyState.hidden = false;
+            const hasFilter = query.trim() !== "" || filter !== "all";
+            if (hasFilter && allEquipment.length > 0) {
+              emptyTitle.textContent = "No matching equipment found";
+              emptyDesc.textContent = "Try adjusting your search query or status filter.";
+              clearFiltersBtn.hidden = false;
+            } else {
+              emptyTitle.textContent = "No equipment recorded yet";
+              emptyDesc.textContent = "Use the Add New Equipment form above to register your first laboratory item.";
+              clearFiltersBtn.hidden = true;
+            }
+            equipmentTableBody.innerHTML = "";
+            return;
+          }
+
+          emptyState.hidden = true;
+          tableWrap.hidden = false;
+
+          equipmentTableBody.innerHTML = filtered
+            .map((item) => {
+              const safeName = escapeHtml(item.name);
+              const safeCategory = escapeHtml(item.category);
+              const isIssued = item.status === "issued";
+              const statusHtml = isIssued
+                ? `<span class="status-badge status-badge--issued">Issued</span>`
+                : `<span class="status-badge status-badge--available">Available</span>`;
+
+              const issuedInfoHtml = isIssued
+                ? `<div class="issued-meta">
+                     <span class="issued-person">${escapeHtml(item.issued_to || "Assigned")}</span>
+                     <span class="issued-date">${escapeHtml(item.issue_date || "")}</span>
+                   </div>`
+                : `<span class="muted-dash">—</span>`;
+
+              const primaryActionHtml = isIssued
+                ? `<button type="button" class="btn btn-return" data-action="return" data-id="${escapeHtml(item.id)}" aria-label="Return ${safeName}">Return</button>`
+                : `<button type="button" class="btn btn-issue" data-action="issue" data-id="${escapeHtml(item.id)}" aria-label="Issue ${safeName}">Issue</button>`;
+
+              return `
+                <tr data-item-id="${escapeHtml(item.id)}">
+                  <td data-label="Equipment">
+                    <div class="equip-name">${safeName}</div>
+                    <div class="equip-id">#${escapeHtml(item.id)}</div>
+                  </td>
+                  <td data-label="Category">${safeCategory}</td>
+                  <td data-label="Quantity" class="col-num">${escapeHtml(item.quantity)}</td>
+                  <td data-label="Status">${statusHtml}</td>
+                  <td data-label="Issued To">${issuedInfoHtml}</td>
+                  <td data-label="Actions">
+                    <div class="row-actions">
+                      ${primaryActionHtml}
+                      <button type="button" class="btn btn-danger-outline" data-action="delete" data-id="${escapeHtml(item.id)}" aria-label="Delete ${safeName}">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            })
+            .join("");
+        }
+
+        async function loadEquipment({ showLoader = true } = {}) {
+          setError("");
+          if (showLoader) {
+            loadingState.hidden = false;
+            tableWrap.hidden = true;
+            emptyState.hidden = true;
+          }
+          refreshBtn.disabled = true;
+
+          try {
+            allEquipment = await db.list();
+            renderDashboard();
+            renderInventory();
+          } catch (err) {
+            setError(
+              formatSupabaseError(err, "Failed to load equipment from Supabase."),
+              isSetupError(err)
+            );
+            inventoryCountLabel.textContent = "Unable to load records";
+            exportCsvBtn.disabled = true;
+            tableWrap.hidden = true;
+            emptyState.hidden = true;
+          } finally {
+            loadingState.hidden = true;
+            refreshBtn.disabled = false;
+          }
+        }
+
+        // Handlers
+        jumpToAddBtn.addEventListener("click", () => {
+          document.getElementById("add-equipment").scrollIntoView({ behavior: "smooth", block: "start" });
+          setTimeout(() => equipNameInput.focus(), 180);
+        });
+
+        addEquipmentForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          addFormError.hidden = true;
+
+          const check = validateNewEquipment(
+            equipNameInput.value,
+            equipCategoryInput.value,
+            equipQuantityInput.value
+          );
+          if (!check.valid) {
+            addFormError.textContent = check.error;
+            addFormError.hidden = false;
+            return;
+          }
+
+          addSubmitBtn.disabled = true;
+          addSubmitBtn.textContent = "Adding...";
+          try {
+            await db.create(check.data);
+            addEquipmentForm.reset();
+            equipQuantityInput.value = "1";
+            await loadEquipment({ showLoader: false });
+            showToast(`Added "${check.data.name}" to inventory.`);
+          } catch (err) {
+            addFormError.textContent = formatSupabaseError(err, "Failed to add equipment.");
+            addFormError.hidden = false;
+          } finally {
+            addSubmitBtn.disabled = false;
+            addSubmitBtn.textContent = "Add Equipment";
+          }
+        });
+
+        searchInput.addEventListener("input", renderInventory);
+        statusFilter.addEventListener("change", renderInventory);
+        exportCsvBtn.addEventListener("click", () => {
+          const filtered = filterEquipment(allEquipment, searchInput.value, statusFilter.value);
+          if (filtered.length === 0) return;
+
+          const csvContent = equipmentToCsv(filtered);
+          const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `lab-equipment-${getTodayIsoDate()}.csv`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          showToast(`Exported ${filtered.length} ${filtered.length === 1 ? "item" : "items"} to CSV.`);
+        });
+        refreshBtn.addEventListener("click", () => loadEquipment({ showLoader: true }));
+        retryLoadBtn.addEventListener("click", () => loadEquipment({ showLoader: true }));
+        copySqlBtn.addEventListener("click", async () => {
+          try {
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+              await navigator.clipboard.writeText(SETUP_SQL);
+              showToast("Setup SQL copied. Paste and run it in Supabase SQL Editor.");
+              return;
+            }
+          } catch {
+            // Clipboard permission denied; fall through to manual fallback message
+          }
+          showToast("Copy unavailable in this browser frame; copy the SQL from the setup guide.");
+        });
+
+        clearFiltersBtn.addEventListener("click", () => {
+          searchInput.value = "";
+          statusFilter.value = "all";
+          renderInventory();
+        });
+
+        // Table row actions (Event delegation)
+        equipmentTableBody.addEventListener("click", async (event) => {
+          const btn = event.target.closest("button[data-action]");
+          if (!btn) return;
+
+          const id = btn.dataset.id;
+          const action = btn.dataset.action;
+          const item = allEquipment.find((entry) => String(entry.id) === String(id));
+          if (!item) return;
+
+          if (action === "issue") {
+            activeIssueId = item.id;
+            issueEquipSummary.textContent = `${item.name} (${item.category} · Qty ${item.quantity})`;
+            issuedToInput.value = "";
+            issueDateInput.value = getTodayIsoDate();
+            issueFormError.hidden = true;
+            issueDialog.showModal();
+            issuedToInput.focus();
+          } else if (action === "return") {
+            btn.disabled = true;
+            try {
+              await db.returnItem(item.id);
+              await loadEquipment({ showLoader: false });
+              showToast(`Marked "${item.name}" as available.`);
+            } catch (err) {
+              setError(formatSupabaseError(err, "Failed to return equipment."), isSetupError(err));
+            } finally {
+              btn.disabled = false;
+            }
+          } else if (action === "delete") {
+            activeDeleteId = item.id;
+            deleteConfirmMessage.textContent = `Are you sure you want to permanently remove "${item.name}" from the inventory?`;
+            deleteDialog.showModal();
+            deleteCancelBtn.focus();
+          }
+        });
+
+        // Issue Modal handlers
+        function closeIssueDialog() {
+          activeIssueId = null;
+          issueDialog.close();
+        }
+
+        issueCancelBtn.addEventListener("click", closeIssueDialog);
+        issueCloseBtn.addEventListener("click", closeIssueDialog);
+        issueDialog.addEventListener("click", (event) => {
+          if (event.target === issueDialog) closeIssueDialog();
+        });
+
+        issueForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          issueFormError.hidden = true;
+
+          const check = validateIssueInput(issuedToInput.value, issueDateInput.value);
+          if (!check.valid) {
+            issueFormError.textContent = check.error;
+            issueFormError.hidden = false;
+            return;
+          }
+
+          issueConfirmBtn.disabled = true;
+          issueConfirmBtn.textContent = "Saving...";
+          try {
+            const targetId = activeIssueId;
+            await db.issue(targetId, check.data.issued_to, check.data.issue_date);
+            closeIssueDialog();
+            await loadEquipment({ showLoader: false });
+            showToast(`Issued to ${check.data.issued_to}.`);
+          } catch (err) {
+            issueFormError.textContent = formatSupabaseError(err, "Failed to issue equipment.");
+            issueFormError.hidden = false;
+          } finally {
+            issueConfirmBtn.disabled = false;
+            issueConfirmBtn.textContent = "Confirm Issue";
+          }
+        });
+
+        // Delete Modal handlers
+        function closeDeleteDialog() {
+          activeDeleteId = null;
+          deleteDialog.close();
+        }
+
+        deleteCancelBtn.addEventListener("click", closeDeleteDialog);
+        deleteCloseBtn.addEventListener("click", closeDeleteDialog);
+        deleteDialog.addEventListener("click", (event) => {
+          if (event.target === deleteDialog) closeDeleteDialog();
+        });
+
+        deleteConfirmBtn.addEventListener("click", async () => {
+          if (activeDeleteId === null) return;
+          deleteConfirmBtn.disabled = true;
+          deleteConfirmBtn.textContent = "Deleting...";
+          try {
+            const targetId = activeDeleteId;
+            await db.remove(targetId);
+            closeDeleteDialog();
+            await loadEquipment({ showLoader: false });
+            showToast("Equipment deleted.");
+          } catch (err) {
+            closeDeleteDialog();
+            setError(formatSupabaseError(err, "Failed to delete equipment."), isSetupError(err));
+          } finally {
+            deleteConfirmBtn.disabled = false;
+            deleteConfirmBtn.textContent = "Delete";
+          }
+        });
+
+        // Initialize
+        loadEquipment({ showLoader: true });
+      }
+    </script>
+  </body>
+</html>
